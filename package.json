@@ -1,0 +1,27 @@
+{
+  "name": "botboy-slack",
+  "version": "1.0.0",
+  "description": "Slack bot rewrite of botboy using bolt framework",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mmattozzi/botboy-slack.git"
+  },
+  "keywords": [
+    "bot",
+    "slack"
+  ],
+  "author": "mike.mattozzi@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mmattozzi/botboy-slack/issues"
+  },
+  "homepage": "https://github.com/mmattozzi/botboy-slack#readme",
+  "dependencies": {
+    "@slack/bolt": "^2.3.0",
+    "mysql": "^2.18.1"
+  }
+}
