@@ -56,11 +56,12 @@ function MysqlBot() {
         }
     };
     
-    this.getQuote = function(nick, say) {
+    this.getQuote = function(nick, requestor, say) {
         if (this.mysql && this.respond) {
             this.mysql.query("select * from messages where nick like '" + nick + "' order by rand() limit 1", function(results, fields) {
                 if (results.length > 0) {
-                  say(self.formatResponse("/do " + nick + " - Result from " + results[0].date, results[0].message));
+                  say(self.formatResponse("/do " + nick + " requested by " + requestor + 
+                  " - Result from " + results[0].date.toDateString(), results[0].message));
                 }
             });
         }

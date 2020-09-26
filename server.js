@@ -1,6 +1,7 @@
 const { App } = require('@slack/bolt');
 const Persistence = require('./persistence/persistence');
 const fs = require('fs');
+const request = require('request');
 
 // Initializes your app with your bot token and signing secret
 const app = new App({
@@ -13,6 +14,11 @@ try {
 } catch (err) {
 	console.log("Missing or corrupt bot.properties file in base directory?");
 	throw err;
+}
+
+var macesReviews = fs.readFileSync("maces-reviews.txt", 'utf8').split('\n');
+if (macesReviews[macesReviews.length - 1] === '') {
+  macesReviews.pop();
 }
 
 var persistence = new Persistence(properties);
@@ -32,6 +38,31 @@ RegExp.prototype.execAll = function(string) {
         matches.push(matchArray);
     }
     return matches;
+}
+
+function formatResponse(context, message) {
+    var resp = {
+        blocks: [
+          {
+            type: "context",
+            elements: [
+              {
+                type: "plain_text",
+                text: context
+              }
+            ]
+          },
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: message
+            }
+          }
+        ]
+      };
+      
+  return resp;
 }
 
 async function resolveDisplayName(userId, client) {
@@ -91,10 +122,45 @@ app.message(/.*/, async ({ message, client, say }) => {
   
 });
 
-app.command('/do', async ({ command, ack, say }) => {
+app.command('/do', async ({ command, ack, client, say }) => {
   // Acknowledge command request
   await ack();
-  persistence.getQuote(command.text, say);
+  var userDisplayName = await resolveDisplayName(command.user_id, client);
+  persistence.getQuote(command.text, userDisplayName, say);
+});
+
+app.command('/showerthought', async ({command, ack, client, say}) => {
+  await ack();
+  request("http://www.reddit.com/r/showerthoughts/.json", async function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+        //console.log(body) // Print the results
+        var showerthought = JSON.parse(body);
+        // There are many returned in the json.  Get a count
+        var showercount = showerthought.data.children.length
+        var randomthought = Math.floor((Math.random() * showercount) + 1);
+        console.log("Found " + showercount + " shower thoughts.  Randomly returning number " + randomthought);
+        var userDisplayName = await resolveDisplayName(command.user_id, client);
+        say(formatResponse("Shower thought request by " + userDisplayName, showerthought.data.children[randomthought].data.title));
+      }
+    });
+});
+
+app.command('/define', async ({command, ack, client, say}) => {
+  await ack();
+  var userDisplayName = await resolveDisplayName(command.user_id, client);
+  
+  request("http://api.urbandictionary.com/v0/define?term=" + command.text, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      var urbanresult = JSON.parse(body);
+      say(formatResponse("Definition of " + command.text + " requested by " + userDisplayName, urbanresult.list[0].definition));
+    }
+  });
+});
+
+app.command('/maces', async ({command, ack, client, say}) => {
+  await ack();
+  var userDisplayName = await resolveDisplayName(command.user_id, client);
+  say(formatResponse("Maces review requested by " + userDisplayName, macesReviews[Math.floor(Math.random()*macesReviews.length)]));
 });
 
 (async () => {

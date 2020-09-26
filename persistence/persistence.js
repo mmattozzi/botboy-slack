@@ -28,9 +28,9 @@ function Persistence(properties) {
     };
     
     // Makes bot say a random quote by nick
-    this.getQuote = function(nick, say) {
+    this.getQuote = function(nick, requestor, say) {
         persistBots.forEach(function(b) {
-            b.getQuote(nick, say);
+            b.getQuote(nick, requestor, say);
         });
     };
     
