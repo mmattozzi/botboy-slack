@@ -58,10 +58,34 @@ function MysqlBot() {
     
     this.getQuote = function(nick, requestor, say) {
         if (this.mysql && this.respond) {
-            this.mysql.query("select * from messages where nick like '" + nick + "' order by rand() limit 1", function(results, fields) {
+            this.mysql.query("select * from messages where length(message) > 15 and nick like '" + nick + "' order by rand() limit 1", function(results, fields) {
                 if (results.length > 0) {
                   say(self.formatResponse("/do " + nick + " requested by " + requestor + 
-                  " - Result from " + results[0].date.toDateString(), results[0].message));
+                  " - Result from " + results[0].date.toDateString() + " ID: (" + results[0].id + ")", results[0].message));
+                }
+            });
+        }
+    };
+    
+    this.getContext = function(msgId, say, thread_ts) {
+        if (this.mysql && this.respond) {
+            this.mysql.query("select * from messages where id > " + (parseInt(msgId) - 5) + " and id < " + (parseInt(msgId) + 5), function(results, fields) {
+                if (results.length > 0) {
+                    // bot.say('#' + results[0].id + " " + results[0].nick + ": " + results[0].message);
+                    
+                    var resp = { blocks: [], thread_ts: thread_ts };
+                    
+                    for (var i = 0; i < results.length; i++) {
+                      resp.blocks.push({
+                        type: "section",
+                        text: {
+                          type: "mrkdwn",
+                          text: (results[i].id == msgId ? "*" : "") + results[i].nick + ": " + results[i].message + (results[i].id == msgId ? "*" : "")
+                        }
+                      });
+                    }
+                    
+                    say(resp);
                 }
             });
         }

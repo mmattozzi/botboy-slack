@@ -86,6 +86,31 @@ async function resolveDisplayName(userId, client) {
   return displayName;
 }
 
+async function messageContext(parentTs, client, channel) {
+  var result = await client.conversations.replies({
+    channel: channel,
+    ts: parentTs
+  });
+  
+  if (result.messages.length > 0) {
+    if (result.messages[0].bot_profile && result.messages[0].bot_profile.name == properties.bot.nick) { 
+      if (result.messages[0].blocks && result.messages[0].blocks.length > 0 && 
+        result.messages[0].blocks[0].elements && result.messages[0].blocks[0].elements.length > 0) {
+        
+        var botText = result.messages[0].blocks[0].elements[0].text;
+        // that's the message that was sent -- pick out the message ID
+        console.log("Replying to " + botText);
+        var match = botText.match(/\((\d+)\)/);
+        if (match) {
+          return match[1];
+        }
+      }
+    }
+  }
+  
+  return null;
+}
+
 // Listens to incoming messages
 app.message(/.*/, async ({ message, client, say }) => {
   // say() sends a message to the channel where the event was triggered
@@ -107,6 +132,18 @@ app.message(/.*/, async ({ message, client, say }) => {
   }
   
   console.log("Translated message: " + translatedMessage);
+  
+  // This message is a reply in a thread, maybe it is asking for clarification on a quote
+  if (message.thread_ts && message.thread_ts != message.ts) {
+    console.log("Checking thread");
+    if (message.text == "context") {
+      var quotedMessageId = await messageContext(message.thread_ts, client, message.channel);
+      if (quotedMessageId != null) {
+        console.log("Finding context of message ID: " + quotedMessageId);
+        persistence.getContext(quotedMessageId, say, message.thread_ts);
+      }
+    }
+  }
 
   if (! properties.logger.ignoreNicks.filter(function (x) { return displayName.indexOf(x) > -1; }).length > 0) {
       if (! (/^!/).test(message.text)) {

@@ -34,6 +34,12 @@ function Persistence(properties) {
         });
     };
     
+    this.getContext = function(msgId, say, thread_ts) {
+        persistBots.forEach(function(b) {
+            b.getContext(msgId, say, thread_ts);
+        });
+    };
+    
     // Makes bot say the message with the id msgId
     this.getMessage = function(msgId, bot) {
         persistBots.forEach(function(b) {
