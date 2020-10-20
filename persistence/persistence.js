@@ -34,9 +34,15 @@ function Persistence(properties) {
         });
     };
     
-    this.getContext = function(msgId, say, thread_ts) {
+    this.getContextById = function(msgId, say, thread_ts) {
         persistBots.forEach(function(b) {
             b.getContext(msgId, say, thread_ts);
+        });
+    };
+    
+    this.getContext = function(messageContext, say, thread_ts) {
+        persistBots.forEach(function(b) {
+            b.getContext(messageContext, say, thread_ts);
         });
     };
     

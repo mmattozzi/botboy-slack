@@ -102,8 +102,10 @@ async function messageContext(parentTs, client, channel) {
         console.log("Replying to " + botText);
         var match = botText.match(/\((\d+)\)/);
         if (match) {
-          return match[1];
+          return { messageId: match[1], text: null };
         }
+      } else if (result.messages[0].text) {
+        return { messageText: result.messages[0].text };
       }
     }
   }
@@ -137,10 +139,10 @@ app.message(/.*/, async ({ message, client, say }) => {
   if (message.thread_ts && message.thread_ts != message.ts) {
     console.log("Checking thread");
     if (message.text == "context") {
-      var quotedMessageId = await messageContext(message.thread_ts, client, message.channel);
-      if (quotedMessageId != null) {
-        console.log("Finding context of message ID: " + quotedMessageId);
-        persistence.getContext(quotedMessageId, say, message.thread_ts);
+      var resultContext = await messageContext(message.thread_ts, client, message.channel);
+      if (resultContext != null) {
+        console.log("Finding context of message ID: " + JSON.stringify(resultContext));
+        persistence.getContext(resultContext, say, message.thread_ts);
       }
     }
   }
