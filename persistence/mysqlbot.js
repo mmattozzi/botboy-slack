@@ -58,7 +58,7 @@ function MysqlBot() {
     
     this.getQuote = function(nick, requestor, say) {
         if (this.mysql && this.respond) {
-            this.mysql.query("select * from messages where length(message) > 15 and nick like '" + nick + "' order by rand() limit 1", function(results, fields) {
+            this.mysql.query("select * from messages where length(message) > 15 and nick like ? order by rand() limit 1", [nick], function(results, fields) {
                 if (results.length > 0) {
                   say(self.formatResponse("/do " + nick + " requested by " + requestor + 
                   " - Result from " + results[0].date.toDateString() + " ID: (" + results[0].id + ")", results[0].message));
@@ -93,7 +93,7 @@ function MysqlBot() {
       if (messageContext.messageId) {
         this.getContextById(messageContext.messageId, say, thread_ts);
       } else {
-        this.mysql.query("select id from messages where message = '" + messageContext.messageText + "'", function(results, fields) {
+        this.mysql.query("select id from messages where message = ?", [messageContext.messageText], function(results, fields) {
           if (results.length > 0) {
             var messageId = results[0].id;
             self.getContextById(messageId, say, thread_ts);
@@ -104,7 +104,7 @@ function MysqlBot() {
     
     this.getMessage = function(msgId, bot) {
         if (this.mysql && this.respond) {
-            this.mysql.query("select * from messages where id = " + msgId, function(results, fields) {
+            this.mysql.query("select * from messages where id = ?", [msgId], function(results, fields) {
                 if (results.length > 0) {
                     bot.say('#' + results[0].id + " " + results[0].nick + ": " + results[0].message);
                 }
