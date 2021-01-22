@@ -34,6 +34,12 @@ function Persistence(properties) {
         });
     };
     
+    this.findMatchingMessage = function(text, requestor, say) {
+        persistBots.forEach(function(b) {
+            b.findMatchingMessage(text, requestor, say);
+        });
+    };
+    
     this.getContextById = function(msgId, say, thread_ts) {
         persistBots.forEach(function(b) {
             b.getContext(msgId, say, thread_ts);

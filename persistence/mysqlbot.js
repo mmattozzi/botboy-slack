@@ -67,6 +67,18 @@ function MysqlBot() {
         }
     };
     
+    this.findMatchingMessage = function(text, requestor, say) {
+        if (this.mysql && this.respond) {
+            this.mysql.query("select * from messages where length(message) > 15 and message like '%" + text + "%' order by rand() limit 1", function(results, fields) {
+                console.log("Result size = " + results.length);
+                if (results.length > 0) {
+                  say(self.formatResponse("/find " + text + " requested by " + requestor + 
+                  " - Result from " + results[0].date.toDateString() + " ID: (" + results[0].id + ")", results[0].message));
+                }
+            });
+        }
+    };
+    
     this.getContextById = function(msgId, say, thread_ts) {
         if (this.mysql && this.respond) {
             this.mysql.query("select * from messages where id > " + (parseInt(msgId) - 5) + " and id < " + (parseInt(msgId) + 5), function(results, fields) {

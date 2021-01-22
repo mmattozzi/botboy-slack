@@ -168,6 +168,13 @@ app.command('/do', async ({ command, ack, client, say }) => {
   persistence.getQuote(command.text, userDisplayName, say);
 });
 
+app.command('/find', async ({ command, ack, client, say }) => {
+  // Acknowledge command request
+  await ack();
+  var userDisplayName = await resolveDisplayName(command.user_id, client);
+  persistence.findMatchingMessage(command.text, userDisplayName, say);
+});
+
 app.command('/showerthought', async ({command, ack, client, say}) => {
   await ack();
   request("http://www.reddit.com/r/showerthoughts/.json", async function (error, response, body) {
