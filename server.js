@@ -61,7 +61,7 @@ function formatResponse(context, message) {
           }
         ]
       };
-      
+
   return resp;
 }
 
@@ -74,7 +74,7 @@ async function resolveDisplayName(userId, client) {
     const result = await client.users.info({
       user: userId
     });
-    
+
     if (result.user.is_bot) {
       displayName = result.user.profile.real_name;
     } else {
@@ -91,12 +91,12 @@ async function messageContext(parentTs, client, channel) {
     channel: channel,
     ts: parentTs
   });
-  
+
   if (result.messages.length > 0) {
-    if (result.messages[0].bot_profile && result.messages[0].bot_profile.name == properties.bot.nick) { 
-      if (result.messages[0].blocks && result.messages[0].blocks.length > 0 && 
+    if (result.messages[0].bot_profile && result.messages[0].bot_profile.name == properties.bot.nick) {
+      if (result.messages[0].blocks && result.messages[0].blocks.length > 0 &&
         result.messages[0].blocks[0].elements && result.messages[0].blocks[0].elements.length > 0) {
-        
+
         var botText = result.messages[0].blocks[0].elements[0].text;
         // that's the message that was sent -- pick out the message ID
         console.log("Replying to " + botText);
@@ -109,7 +109,7 @@ async function messageContext(parentTs, client, channel) {
       }
     }
   }
-  
+
   return null;
 }
 
@@ -117,24 +117,24 @@ async function messageContext(parentTs, client, channel) {
 app.message(/.*/, async ({ message, client, say }) => {
   // say() sends a message to the channel where the event was triggered
   //await say(`Hey there <@${message.user}>!`);
-  
+
   console.log(JSON.stringify(message));
-  
+
   var displayName = await resolveDisplayName(message.user, client);
-  
+
   console.log("Message from: " + displayName);
-  
-  var translatedMessage = message.text;  
+
+  var translatedMessage = message.text;
   var userIdsToTranslate = /<@(.*?)>/g.execAll(message.text);
-  
+
   for (var i = 0; i < userIdsToTranslate.length; i++) {
     var mentionedUserId = userIdsToTranslate[i];
     var mentionedDisplayName = await resolveDisplayName(mentionedUserId[1], client);
     translatedMessage = translatedMessage.replace(mentionedUserId[0], mentionedDisplayName);
   }
-  
+
   console.log("Translated message: " + translatedMessage);
-  
+
   // This message is a reply in a thread, maybe it is asking for clarification on a quote
   if (message.thread_ts && message.thread_ts != message.ts) {
     console.log("Checking thread");
@@ -158,7 +158,7 @@ app.message(/.*/, async ({ message, client, say }) => {
     persistence.getRandom(say);
     return;
   }
-  
+
 });
 
 app.command('/do', async ({ command, ack, client, say }) => {
@@ -194,11 +194,15 @@ app.command('/showerthought', async ({command, ack, client, say}) => {
 app.command('/define', async ({command, ack, client, say}) => {
   await ack();
   var userDisplayName = await resolveDisplayName(command.user_id, client);
-  
+
   request("http://api.urbandictionary.com/v0/define?term=" + command.text, function (error, response, body) {
     if (!error && response.statusCode == 200) {
       var urbanresult = JSON.parse(body);
-      say(formatResponse("Definition of " + command.text + " requested by " + userDisplayName, urbanresult.list[0].definition));
+      if (urbanresult.list && urbanresult.list.length > 0) {
+        say(formatResponse("Definition of " + command.text + " requested by " + userDisplayName, urbanresult.list[0].definition));
+      } else {
+        say(formatResponse("Definition of " + command.text + " requested by " + userDisplayName, "I really couldn't guess what that means."));
+      }
     }
   });
 });
