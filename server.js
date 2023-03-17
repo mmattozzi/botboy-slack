@@ -2,12 +2,19 @@ const { App } = require('@slack/bolt');
 const Persistence = require('./persistence/persistence');
 const fs = require('fs');
 const request = require('request');
+const Configuration = require("openai").Configuration;
+const OpenAIApi = require("openai").OpenAIApi;
 
 // Initializes your app with your bot token and signing secret
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   signingSecret: process.env.SLACK_SIGNING_SECRET
 });
+
+const openAiConfig = new Configuration({
+  apiKey: process.env.OPENAI_KEY
+});
+const openai = new OpenAIApi(openAiConfig);
 
 try {
 	var properties = JSON.parse(fs.readFileSync("bot.properties"));
@@ -173,6 +180,25 @@ app.command('/find', async ({ command, ack, client, say }) => {
   await ack();
   var userDisplayName = await resolveDisplayName(command.user_id, client);
   persistence.findMatchingMessage(command.text, userDisplayName, say);
+});
+
+app.command('/gpt3', async ({ command, ack, client, say }) => {
+  await ack();
+  var userDisplayName = await resolveDisplayName(command.user_id, client);
+  say(userDisplayName + " ➡️ GPT3: " + command.text);
+  try {
+    var aiResp = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: command.text }
+      ]
+    });
+    say(aiResp.data.choices[0].message.content);
+  } catch (err) {
+    console.log(err);
+    say("Something went terribly wrong");
+  } 
 });
 
 app.command('/showerthought', async ({command, ack, client, say}) => {
